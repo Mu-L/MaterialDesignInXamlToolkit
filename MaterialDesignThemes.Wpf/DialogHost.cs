@@ -432,6 +432,15 @@ namespace MaterialDesignThemes.Wpf
             set => SetValue(DialogContentProperty, value);
         }
 
+        public static readonly DependencyProperty DialogContentUniformCornerRadiusProperty = DependencyProperty.Register(
+            nameof(DialogContentUniformCornerRadius), typeof(double), typeof(DialogHost), new PropertyMetadata(4d));
+
+        public double DialogContentUniformCornerRadius
+        {
+            get => (double)GetValue(DialogContentUniformCornerRadiusProperty);
+            set => SetValue(DialogContentUniformCornerRadiusProperty, value);
+        }
+
         public static readonly DependencyProperty DialogContentTemplateProperty = DependencyProperty.Register(
             nameof(DialogContentTemplate), typeof(DataTemplate), typeof(DialogHost), new PropertyMetadata(default(DataTemplate)));
 
@@ -854,10 +863,10 @@ namespace MaterialDesignThemes.Wpf
         {
             foreach (var weakRef in LoadedInstances.ToList())
             {
-                if (!weakRef.TryGetTarget(out DialogHost? dialogHost) ||
-                    Equals(dialogHost, this))
+                if (!weakRef.TryGetTarget(out DialogHost? dialogHost) || ReferenceEquals(dialogHost, this))
                 {
                     LoadedInstances.Remove(weakRef);
+                    break;
                 }
             }
         }
@@ -866,16 +875,22 @@ namespace MaterialDesignThemes.Wpf
         {
             foreach (var weakRef in LoadedInstances.ToList())
             {
-                if (!weakRef.TryGetTarget(out DialogHost? dialogHost))
-                {
-                    LoadedInstances.Remove(weakRef);
-                }
-                if (Equals(dialogHost, this))
+                if (weakRef.TryGetTarget(out DialogHost? dialogHost) && ReferenceEquals(dialogHost, this))
                 {
                     return;
                 }
             }
+
             LoadedInstances.Add(new WeakReference<DialogHost>(this));
+
+            if (IsOpen && _popup is { } popup)
+            {
+                if (!popup.IsOpen)
+                {
+                    popup.IsOpen = true;
+                    (popup as PopupEx)?.RefreshPosition();
+                }
+            }
         }
     }
 }
